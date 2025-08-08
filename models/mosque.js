@@ -1,15 +1,23 @@
 const mongoose = require('mongoose');
 
-const mosqueSchema=new mongoose.Schema({
-      name: String,
+const mosqueSchema = new mongoose.Schema({
+  name: String,
   address: String,
   city: String,
   area: String,
-  coordinates: {
-    lat: Number,
-    lng: Number,
+  location: {
+    type: {
+      type: String,
+      enum: ['Point'],
+      default: 'Point',
+      required: true,
+    },
+    coordinates: {
+      type: [Number], // [lng, lat]
+      required: true,
+    },
   },
-    prayerTimes: {
+  prayerTimes: {
     fajr: String,
     dhuhr: String,
     asr: String,
@@ -17,7 +25,7 @@ const mosqueSchema=new mongoose.Schema({
     isha: String,
     jummah: String,
   },
-   amenities: {
+  amenities: {
     wudu: Boolean,
     womenArea: Boolean,
     parking: Boolean,
@@ -25,9 +33,12 @@ const mosqueSchema=new mongoose.Schema({
     wheelchair: Boolean,
     ac: Boolean,
   },
-    photos: [String],
+  photos: [String],
   contributorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Contributor' },
   verified: { type: Boolean, default: false },
-},{ timestamps: true });
+}, { timestamps: true });
+
+// ✅ Create 2dsphere index for location-based queries
+mosqueSchema.index({ location: '2dsphere' });
 
 module.exports = mongoose.model('MosqueInfo', mosqueSchema);
