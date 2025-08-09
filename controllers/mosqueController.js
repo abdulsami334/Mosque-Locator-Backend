@@ -39,7 +39,7 @@ exports.getMyMosques = async (req, res) => {
 // ✅ Find mosques near user's location
 exports.getNearbyMosques = async (req, res) => {
   try {
-    const { lat, lng, radius = 500 } = req.query; // radius in meters
+    const { lat, lng, radius = 5000 } = req.query; // radius in meters
 
     if (!lat || !lng) {
       return res.status(400).json({ message: 'Latitude and longitude are required' });
@@ -52,10 +52,10 @@ exports.getNearbyMosques = async (req, res) => {
             type: 'Point',
             coordinates: [parseFloat(lng), parseFloat(lat)]
           },
-          $maxDistance: parseInt(radius) // e.g. 500 meters = 5km
+          $maxDistance: parseInt(radius)
         }
-      },
-      verified: true // optional: only show verified ones
+      }
+      // verified: true  // <-- remove for now to debug
     });
 
     res.json(mosques);
@@ -64,4 +64,5 @@ exports.getNearbyMosques = async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch nearby mosques', error });
   }
 };
+
 
