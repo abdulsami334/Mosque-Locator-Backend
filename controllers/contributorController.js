@@ -28,5 +28,11 @@ const {email, password}=req.body;
 
    }
    const token=jwt.sign({ id: contributor._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-   res.json({ token, contributor });
+   res.json({ token, contributor:{
+       contributor: {
+    name: contributor.name,
+    email: contributor.email,
+    isContributor: true
+  }
+   } });
 }

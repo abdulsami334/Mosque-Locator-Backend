@@ -12,3 +12,4 @@ const contributorSchema = new mongoose.Schema({
 });
 
 module.exports = mongoose.model('Contributor', contributorSchema);
+  
