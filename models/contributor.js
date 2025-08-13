@@ -8,6 +8,7 @@ const contributorSchema = new mongoose.Schema({
   city: String,
   area: String,
   reason: String,
+   imageUrl: { type: String, default: '' },
   approved: { type: Boolean, default: false },
 });
 
