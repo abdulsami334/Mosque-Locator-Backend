@@ -32,6 +32,7 @@ const mosqueSchema = new mongoose.Schema({
     toilet: Boolean,
     wheelchair: Boolean,
     ac: Boolean,
+    washroom:Boolean
   },
   photos: [String],
   contributorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Contributor' },
