@@ -88,6 +88,8 @@ exports.login = async (req, res) => {
   }
 };
 
+
+
 // ---------------- UPDATE PROFILE PICTURE ----------------
 exports.updateProfilePicture = async (req, res) => {
   try {
@@ -125,4 +127,9 @@ exports.updateProfilePicture = async (req, res) => {
       error: err.message,
     });
   }
+
+  
 };
+
+
+
