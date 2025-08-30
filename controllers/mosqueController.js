@@ -142,3 +142,33 @@ exports.getNearbyMosques = async (req, res) => {
 };
 
 
+
+
+
+exports.reviewMosque = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { action } = req.body;
+
+    if (!['approve', 'reject'].includes(action)) {
+      return res.status(400).json({ message: 'Invalid action' });
+    }
+
+    const mosque = await Mosque.findById(id);
+    if (!mosque) return res.status(404).json({ message: 'Mosque not found' });
+    if (mosque.approved) return res.status(400).json({ message: 'Already processed' });
+
+    if (action === 'approve') {
+      mosque.approved = true;
+      mosque.verified=true;
+      await mosque.save();
+      console.log('BODY:', req.body);
+      return res.json({ message: 'Mosque approved', mosque });
+    }
+
+    await Mosque.findByIdAndDelete(id);
+    res.json({ message: 'Mosque rejected and removed' });
+  } catch (e) {
+    res.status(500).json({ message: 'Server error', error: e.message });
+  }
+};
