@@ -17,17 +17,17 @@ exports.register = async (req, res) => {
   try {
     const { name, email, password, phone, city, area, reason } = req.body;
 
-    // Check if already registered
+    // ✅ check already registered
     const existing = await Contributor.findOne({ email });
     if (existing) {
-      return res.status(400).json({ message: 'Already registered' });
+      return res.status(400).json({ message: "Already registered" });
     }
 
-    // Hash password
+    // ✅ password hash
     const hash = await bcrypt.hash(password, 10);
 
-    // Save contributor
-    await Contributor.create({
+    // ✅ save contributor (approved:false by default)
+    const contributor = await Contributor.create({
       name,
       email,
       password: hash,
@@ -35,13 +35,16 @@ exports.register = async (req, res) => {
       city,
       area,
       reason,
+      approved: false,
     });
 
     res.status(201).json({
-      message: 'Registration submitted. Wait for approval.',
+      message: "Registration submitted. Wait for approval.",
+      contributor: { id: contributor._id, email: contributor.email }
     });
   } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
+    console.error("❌ Register Error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 };
 
@@ -49,24 +52,26 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const contributor = await Contributor.findOne({ email });
 
-    if (!contributor || !contributor.approved) {
-      return res
-        .status(401)
-        .json({ message: 'Invalid credentials or not approved' });
+    const contributor = await Contributor.findOne({ email });
+    if (!contributor) {
+      return res.status(401).json({ message: "Contributor not found" });
     }
 
+    if (!contributor.approved) {
+      return res.status(403).json({ message: "Your account is not approved yet" });
+    }
+
+    // ✅ password check
     const isMatch = await bcrypt.compare(password, contributor.password);
     if (!isMatch) {
-      return res.status(400).json({ message: 'Incorrect password' });
+      return res.status(400).json({ message: "Incorrect password" });
     }
 
-    const token = jwt.sign(
-      { id: contributor._id },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
+    // ✅ generate token
+    const token = jwt.sign({ id: contributor._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
 
     res.json({
       token,
@@ -84,52 +89,49 @@ exports.login = async (req, res) => {
       },
     });
   } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
+    console.error("❌ Login Error:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 };
-
-
 
 // ---------------- UPDATE PROFILE PICTURE ----------------
 exports.updateProfilePicture = async (req, res) => {
   try {
-    const contributorId = req.user.id; // middleware se aata hai
+    const contributorId = req.user.id; // ✅ from auth middleware
     if (!req.file) {
-      return res.status(400).json({ message: 'No image uploaded' });
+      return res.status(400).json({ message: "No image uploaded" });
     }
 
-    // Upload to Cloudinary
+    // ✅ upload to cloudinary
     const uploadRes = await cloudinary.uploader.upload(req.file.path, {
-      folder: 'mosque_locator/profile_pics',
+      folder: "mosque_locator/profile_pics",
     });
 
-    // Remove local temp file
-    fs.unlinkSync(req.file.path);
+    // ✅ remove local file (temp)
+    if (fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
 
-    // Update DB
+    // ✅ update DB
     const contributor = await Contributor.findByIdAndUpdate(
       contributorId,
       { imageUrl: uploadRes.secure_url },
       { new: true }
-    ).select('-password');
+    ).select("-password");
 
     if (!contributor) {
-      return res.status(404).json({ message: 'Contributor not found' });
+      return res.status(404).json({ message: "Contributor not found" });
     }
 
     res.json({
-      message: 'Profile picture updated',
+      message: "Profile picture updated",
       contributor,
     });
   } catch (err) {
+    console.error("❌ Update Picture Error:", err);
     res.status(500).json({
-      message: 'Failed to update profile picture',
+      message: "Failed to update profile picture",
       error: err.message,
     });
   }
-
-  
 };
-
-
-

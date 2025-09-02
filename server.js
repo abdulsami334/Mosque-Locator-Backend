@@ -13,6 +13,8 @@ app.use(express.json());   // <= parses JSON bodies
 app.use('/api/contributors', require('./routes/contributorRoutes'));
 app.use('/api/mosques',      require('./routes/mosqueRoutes'));
 app.use('/api/admin',        require('./routes/contributorAdmin'));
+app.use('/api/notifications', require('./routes/notification'));
+
 
 connectDB();
 const PORT = process.env.PORT || 5000;
