@@ -45,7 +45,7 @@ exports.addMosque = async (req, res) => {
       photos,
       contributorId: req.user.id, // ✅ link to contributor
       approved: false,            // default not approved
-      verified: false
+      status: "pending",
     });
 
     await mosque.save();
@@ -63,29 +63,6 @@ exports.addMosque = async (req, res) => {
     res.status(500).json({ message: "Failed to add mosque", error: error.message });
   }
 };
-
-// ✅ Update mosque (only by contributor who added it)
-// exports.updateMosque = async (req, res) => {
-//   try {
-//     const mosqueId = req.params.id;
-//     const updateData = req.body;
-
-//     const mosque = await Mosque.findOneAndUpdate(
-//       { _id: mosqueId, contributorId: req.user.id }, // ✅ ensure ownership
-//       updateData,
-//       { new: true }
-//     );
-
-//     if (!mosque) {
-//       return res.status(404).json({ message: "Mosque not found or not yours" });
-//     }
-
-//     res.json({ message: "Mosque updated", mosque });
-//   } catch (err) {
-//     console.error("❌ Update error:", err);
-//     res.status(500).json({ message: "Update failed", error: err.message });
-//   }
-// };
 
 
 exports.updateMosque = async (req, res) => {
@@ -119,10 +96,10 @@ exports.updateMosque = async (req, res) => {
   }
 };
 
-// ✅ Public API – anyone can see all mosques
+
 exports.getAllMosques = async (req, res) => {
   try {
-    const mosques = await Mosque.find({ approved: true });
+    const mosques = await Mosque.find();
     res.json(mosques);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch mosques", error });
@@ -166,7 +143,14 @@ exports.getMyMosques = async (req, res) => {
 
 
 // ✅ Find mosques near user's location
- exports.getNearbyMosques = async (req, res) => { try { const { lat, lng, radius = 5000 } = req.query;  if (!lat || !lng) { return res.status(400).json({ message: 'Latitude and longitude are required' }); } const mosques = await Mosque.find({ location: { $near: { $geometry: { type: 'Point', coordinates: [parseFloat(lng), parseFloat(lat)] }, $maxDistance: parseInt(radius) } } }); res.json(mosques); } catch (error) { console.error(error); res.status(500).json({ message: 'Failed to fetch nearby mosques', error }); } };
+ exports.getNearbyMosques = async (req, res) => { try { const { lat, lng, radius = 5000 } = req.query;  if (!lat || !lng) { return res.status(400).json({ message: 'Latitude and longitude are required' }); } 
+ const mosques = await Mosque.find({
+   location: { $near: {
+     $geometry: { 
+      type: 'Point',
+       coordinates: [parseFloat(lng), parseFloat(lat)] }, $maxDistance: parseInt(radius) } },
+      status: "accepted", 
+      }); res.json(mosques); } catch (error) { console.error(error); res.status(500).json({ message: 'Failed to fetch nearby mosques', error }); } };
 
 // ✅ Admin review (approve/reject mosque)
 exports.reviewMosque = async (req, res) => {
@@ -184,13 +168,13 @@ exports.reviewMosque = async (req, res) => {
 
     if (action === "approve") {
       mosque.approved = true;
-      mosque.verified = true;
+      mosque.status = "accepted";
       await mosque.save();
 
       // ✅ Approved notification
       await Notification.create({
          userId: String(mosque.contributorId),
-        message: "Your mosque has been approved. Now you can edit it.",
+        message: "Your mosque has been approved.",
         status: "approved"
       });
 
@@ -200,7 +184,7 @@ exports.reviewMosque = async (req, res) => {
     await Mosque.findByIdAndDelete(id);
 
     // ✅ Rejected notification
-    await Notification.findByIdAndUpdate({
+    await Notification.create({
       userId: String(mosque.contributorId),
       message: "Your mosque request was rejected.",
       status: "rejected"
@@ -209,5 +193,24 @@ exports.reviewMosque = async (req, res) => {
     res.json({ message: "Mosque rejected and removed" });
   } catch (e) {
     res.status(500).json({ message: "Server error", error: e.message });
+  }
+};
+
+
+// ✅ Get mosque stats (pending & approved count)
+exports.getMosqueStats = async (req, res) => {
+  try {
+    const pendingCount = await Mosque.countDocuments({ status: "pending" });
+    const approvedCount = await Mosque.countDocuments({ status: "accepted" });
+const rejectedCount = await Mosque.countDocuments({ status: "rejected" });
+    res.json({
+      pending: pendingCount,
+      approved: approvedCount,
+      rejected:rejectedCount,
+      total: pendingCount + approvedCount
+    });
+  } catch (error) {
+    console.error("❌ Stats error:", error);
+    res.status(500).json({ message: "Failed to fetch mosque stats", error: error.message });
   }
 };

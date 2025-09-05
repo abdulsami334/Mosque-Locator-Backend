@@ -48,7 +48,7 @@ exports.reviewContributor = async (req, res) => {
     const { id } = req.params;
     const { action } = req.body;
 
-    if (!['approve', 'reject'].includes(action)) {
+    if (!['accepted', 'rejected'].includes(action)) {
       return res.status(400).json({ message: 'Invalid action' });
     }
 
@@ -56,15 +56,15 @@ exports.reviewContributor = async (req, res) => {
     if (!contributor) return res.status(404).json({ message: 'Contributor not found' });
     if (contributor.approved) return res.status(400).json({ message: 'Already processed' });
 
-    if (action === 'approve') {
+    if (action === 'accepted') {
       contributor.approved = true;
       await contributor.save();
       console.log('BODY:', req.body);
       return res.json({ message: 'Contributor approved', contributor });
     }
 
-    await Contributor.findByIdAndDelete(id);
-    res.json({ message: 'Contributor rejected and removed' });
+    // await Contributor.findByIdAndDelete(id);
+     res.json({ message: 'Contributor rejected' });// and removed
   } catch (e) {
     res.status(500).json({ message: 'Server error', error: e.message });
   }

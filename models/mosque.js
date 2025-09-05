@@ -36,7 +36,7 @@ const mosqueSchema = new mongoose.Schema({
   },
   photos: [String],
   contributorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Contributor' },
-  verified: { type: Boolean, default: false },
+  status: { type: String,enum: [ "pending", "rejected","accepted"], default: "pending" },
 }, { timestamps: true });
 
 // ✅ Create 2dsphere index for location-based queries
