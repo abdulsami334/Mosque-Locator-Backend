@@ -35,7 +35,7 @@ exports.register = async (req, res) => {
       city,
       area,
       reason,
-      approved: false,
+      approved: true,
     });
 
     res.status(201).json({
