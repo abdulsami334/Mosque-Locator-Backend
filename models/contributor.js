@@ -9,8 +9,8 @@ const contributorSchema = new mongoose.Schema({
   area: String,
   reason: String,
    imageUrl: { type: String, default: '' },
-  approved: { type: Boolean, default: false },
-  isAdmin: { type: Boolean, default: false }
+  approved: { type: Boolean, default: true },
+  isAdmin: { type: Boolean, default: true }
 });
 
 module.exports = mongoose.model('Contributor', contributorSchema);

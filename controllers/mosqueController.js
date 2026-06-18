@@ -44,8 +44,8 @@ exports.addMosque = async (req, res) => {
       amenities,
       photos,
       contributorId: req.user.id, // ✅ link to contributor
-      approved: false,            // default not approved
-      status: "pending",
+      approved: true,            // default not approved
+      status: "accepted",
     });
 
     await mosque.save();
